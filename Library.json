@@ -1,0 +1,26 @@
+{
+  "name": "EKM_Attitude",
+  "version": "1.0.0",
+  "description": "library for ICM in fusion with  extended kalamn filter == roll - pitch angles",
+  "keywords": "UAV",
+  "repository":
+  {
+    "type": "git",
+    "url": ""
+  },
+  "authors":
+  [
+    {
+      "name": "Matic Dreu",
+      "email": "matic.dreu@student.um.si"
+      
+    }
+  ],
+  "license": "Fu",
+  "homepage": "nimam",
+  "dependencies": {
+    "ownername/print": "~1.3.0"
+  },
+  "frameworks": "*",
+  "platforms": "*"
+}

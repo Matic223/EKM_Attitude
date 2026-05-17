@@ -1,0 +1,20 @@
+Increase Q → EKF reacts faster, trusts gyro prediction less, more responsive
+Decrease Q → smoother, slower, may lag
+
+Increase R → trusts accelerometer less, less vibration/noise, more gyro drift
+Decrease R → trusts accelerometer more, corrects drift faster, more noisy
+
+Testing:
+Q=1e-7f ---> roll-pitch error at high shacking +-2.5 degrees (R_diag=0.05)
+Q=1e-5f ---> roll-pitch error at high shacking +-4.5 degrees (R_diag=0.05)
+Q=1e-3f ---> roll-pitch error at high shacking +-17 degrees  (R_diag=0.05)
+
+Q=1e-4f ---> roll-pitch error at high shacking +-6.5 degrees  (R_diag=0.20)
+Q=1e-4f ---> roll-pitch error at high shacking +-4 degrees  (R_diag=0.30)
+Q=1e-5f ---> roll-pitch error at high shacking +-5 degrees  (R_diag=0.15)
+Q=1e-5f ---> roll-pitch error at high shacking +-4 degrees  (R_diag=0.20)
+Q=1e-3f ---> roll-pitch error at high shacking +-10 degrees  (R_diag=0.30)
+Q=1e-3f ---> roll-pitch error at high shacking +-8 degrees  (R_diag=0.40)
+Q=1e-5f ---> roll-pitch error at high shacking +-2.5 degrees  (R_diag=0.20)
+
+

@@ -1,0 +1,40 @@
+// 1. Convert raw sensor data
+// accel raw -> g
+// gyro raw -> deg/s -> rad/s
+
+// 2. EKF predict
+// q_dot from gyro
+// Picard discretization
+// q_pred = Phi * q
+// normalize q
+
+// 3. Covariance predict
+// F = Phi
+// P = F * P * F^T + Q
+
+// 4. Measurement prediction
+// zPred = h(q)
+
+// 5. Real measurement
+// z = normalized accel vector
+
+// 6. Innovation
+// y = z - zPred
+
+// 7. Measurement Jacobian
+// H = dh/dq
+
+// 8. Kalman gain
+// S = HPH^T + R
+// K = PH^T S^-1
+
+// 9. State update
+// q = q + K*y
+// normalize q
+
+// 10. Covariance update
+// P = (I - KH)P
+
+// 11. Output roll/pitch/yaw
+
+
