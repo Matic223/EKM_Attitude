@@ -407,14 +407,14 @@ void kalmanAngle(
     }
 
     // 1. Convert accelerometer raw LSB to g
-    AccX = event_accelX / 2048.0f;
+    AccX =( event_accelX / 2048.0f);
     AccY = event_accelY / 2048.0f;
-    AccZ = event_accelZ / 2048.0f;
+    AccZ = (event_accelZ / 2048.0f);
 
     // 2. Convert gyro raw LSB to deg/s and subtract bias
-    gx = gyroX / 16.4f - BiasGyro.gyroBiasX;
+    gx =( gyroX / 16.4f - BiasGyro.gyroBiasX);
     gy = gyroY / 16.4f - BiasGyro.gyroBiasY;
-    gz = gyroZ / 16.4f - BiasGyro.gyroBiasZ;
+    gz = (gyroZ / 16.4f - BiasGyro.gyroBiasZ);
 
     // 3. Convert gyro to rad/s for quaternion math
     float wx = gx * DEG_TO_RAD;
