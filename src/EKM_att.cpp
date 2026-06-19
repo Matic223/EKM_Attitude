@@ -1,6 +1,6 @@
 #include "EKM_att.h"
 #include <math.h>
-
+#include <cstdio>
 // Quaternion state: x = [q0 q1 q2 q3]
 static float x[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 
@@ -13,7 +13,7 @@ static float P[4][4] = {
 };
 
 // Process noise Q, 4x4
-static float Q_tunnable= 1e-5f;
+static float Q_tunnable= 1e-4f;
 static float Q[4][4] = {
     {Q_tunnable, 0.0f, 0.0f, 0.0f},
     {0.0f, Q_tunnable, 0.0f, 0.0f},
@@ -22,7 +22,7 @@ static float Q[4][4] = {
 };
 
 // Accelerometer measurement noise R, 3x3
-static float R_tunnable= 0.20f;
+static float R_tunnable= 3.0f;
 static float R[3][3] = {
     {R_tunnable, 0.0f, 0.0f},
     {0.0f, R_tunnable, 0.0f},
@@ -71,35 +71,6 @@ void resetEKF()
     }
 }
 
-void calibrateGyroBias(
-    int samples,
-    int16_t readGyroX,
-    int16_t readGyroY,
-    int16_t readGyroZ,
-    GyroBias *BiasOut
-) {
-    float gxCal = (float)readGyroX / 16.4f;
-    float gyCal = (float)readGyroY / 16.4f;
-    float gzCal = (float)readGyroZ / 16.4f;
-
-    sumX += gxCal;
-    sumY += gyCal;
-    sumZ += gzCal;
-
-    count++;
-
-    if (count >= samples) {
-        BiasOut->gyroBiasX = sumX / samples;
-        BiasOut->gyroBiasY = sumY / samples;
-        BiasOut->gyroBiasZ = sumZ / samples;
-
-        sumX = 0.0f;
-        sumY = 0.0f;
-        sumZ = 0.0f;
-        count = 0;
-    }
-}
-
 static void buildPicardPhi(float wx, float wy, float wz, float dt, float Phi[4][4])
 {
     // wx, wy, wz in rad/s
@@ -118,6 +89,20 @@ static void buildPicardPhi(float wx, float wy, float wz, float dt, float Phi[4][
     Phi[2][0] = b*dy;   Phi[2][1] = -b*dz;  Phi[2][2] = a;      Phi[2][3] = b*dx;
     Phi[3][0] = b*dz;   Phi[3][1] = b*dy;   Phi[3][2] = -b*dx;  Phi[3][3] = a;
 }
+
+
+static void buildEulerPhi(float wx, float wy, float wz, float dt, float Phi[4][4])
+{
+    // wx, wy, wz in rad/s
+    float hx = 0.5f * wx * dt;
+    float hy = 0.5f * wy * dt;
+    float hz = 0.5f * wz * dt;
+
+    Phi[0][0] = 1.0f;  Phi[0][1] = -hx;   Phi[0][2] = -hy;   Phi[0][3] = -hz;
+    Phi[1][0] = hx;    Phi[1][1] = 1.0f;  Phi[1][2] = hz;    Phi[1][3] = -hy;
+    Phi[2][0] = hy;    Phi[2][1] = -hz;   Phi[2][2] = 1.0f;  Phi[2][3] = hx;
+    Phi[3][0] = hz;    Phi[3][1] = hy;    Phi[3][2] = -hx;   Phi[3][3] = 1.0f;
+} 
 
 static void predictState(const float Phi[4][4])
 {
@@ -238,8 +223,8 @@ static void ekfAccelerometerUpdate(float ax, float ay, float az)
     float normA = sqrtf(ax*ax + ay*ay + az*az);
 
     // Use accelerometer only when it is close to 1 g
-    if (normA < 0.8f || normA > 1.2f) {
-        return;
+   if (normA < 0.95 || normA > 1.05) {
+    return;
     }
 
     float z[3] = {
@@ -388,15 +373,14 @@ static void quaternionToEuler(float &roll, float &pitch, float &yaw)
 }
 
 void kalmanAngle(
-    float event_accelX,
-    float event_accelY,
-    float event_accelZ,
-    float gyroX,
-    float gyroY,
-    float gyroZ,
+    float AccX,
+    float AccY,
+    float AccZ,
+    float gx_dps,
+    float gy_dps,
+    float gz_dps,
     float dt,
-    kalmanICMData *ekfData,
-    GyroBias &BiasGyro
+    kalmanICMData *ekfData
 ) {
     if (ekfData == nullptr) {
         return;
@@ -406,25 +390,16 @@ void kalmanAngle(
         return;
     }
 
-    // 1. Convert accelerometer raw LSB to g
-    AccX =( event_accelX / 2048.0f);
-    AccY = event_accelY / 2048.0f;
-    AccZ = (event_accelZ / 2048.0f);
-
-    // 2. Convert gyro raw LSB to deg/s and subtract bias
-    gx =( gyroX / 16.4f - BiasGyro.gyroBiasX);
-    gy = gyroY / 16.4f - BiasGyro.gyroBiasY;
-    gz = (gyroZ / 16.4f - BiasGyro.gyroBiasZ);
-
     // 3. Convert gyro to rad/s for quaternion math
-    float wx = gx * DEG_TO_RAD;
-    float wy = gy * DEG_TO_RAD;
-    float wz = gz * DEG_TO_RAD;
+    float wx =gx_dps* DEG_TO_RAD;
+    float wy =gy_dps* DEG_TO_RAD;
+    float wz =gz_dps* DEG_TO_RAD;
 
     // 4. Build Picard propagation matrix
     float Phi[4][4];
     buildPicardPhi(wx, wy, wz, dt, Phi);
-
+    //buildEulerPhi(wx, wy, wz, dt, Phi);
+    
     // 5. Predict state
     predictState(Phi);
 
@@ -447,11 +422,16 @@ void kalmanAngle(
     ekfData->q2 = x[2];
     ekfData->q3 = x[3];
 
-    ekfData->rateX = gx;
-    ekfData->rateY = gy;
-    ekfData->rateZ = gz;
+    ekfData->rateX = gx_dps;
+    ekfData->rateY = gy_dps;
+    ekfData->rateZ = gz_dps;
 
     ekfData->accX = AccX;
     ekfData->accY = AccY;
     ekfData->accZ = AccZ;
+    static bool printed = false;
+if (!printed) {
+    printf("USING MODIFIED kalmanAngle VERSION\n");
+    printed = true;
+}
 }

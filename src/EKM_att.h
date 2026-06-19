@@ -21,16 +21,19 @@
     float accY;   // g
     float accZ;   // g
 };
-///////////////// struct za bias/////
-struct GyroBias
-{
 
-  float gyroBiasX;
-  float gyroBiasY;
-  float gyroBiasZ;
-
-};
 void resetEKF();
-void kalmanAngle(float event_accelX, float event_accelY,float event_accelZ,float gyroX,float gyroY,float gyroZ,float dt,kalmanICMData *kalmanICMdata, GyroBias &BiasGyro);
-void calibrateGyroBias(int samples,  int16_t readGyroX, int16_t readGyroY,int16_t readGyroZ, GyroBias *BiasOut);
+
+void kalmanAngle(
+    float AccX,
+    float AccY,
+    float AccZ,
+    float gx_dps,
+    float gy_dps,
+    float gz_dps,
+    float dt,
+    kalmanICMData *ekfData
+);
+
+
 #endif
